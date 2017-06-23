@@ -1,0 +1,103 @@
+homeassistant:
+  # Name of the location where Home Assistant is running
+  name: Ben's Apartment
+  # Location required to calculate the time the sun rises and sets
+  latitude: 47.6319
+  longitude: -122.2968
+  # Impacts weather/sunrise data (altitude above sea level in meters)
+  elevation: 16
+  # metric for Metric, imperial for Imperial
+  unit_system: imperial
+  # Pick yours from here: http://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+  time_zone: America/Los_Angeles
+
+  customize:
+    light.PixelWall:
+      assumed_state: false
+      friendly_name: "Pixel Wall"
+      icon: mdi:grid
+    light.ReadingLight:
+      assumed_state: false
+      friendly_name: "Reading Light"
+      icon: mdi:ceiling-light
+    #lock.BuildingDoor:
+    #  hidden:true
+
+# Show links to resources in log and frontend
+introduction:
+
+# Enables the frontend
+frontend:
+
+# Enables configuration UI
+config:
+
+http:
+  # Uncomment this to add a password (recommended!)
+  api_password: semicolon
+  # Uncomment this if you are using SSL or running in Docker etc
+  # base_url: example.duckdns.org:8123
+
+# Checks for available updates
+updater:
+
+# Discover some devices automatically
+discovery:
+
+# Allows you to issue voice commands from the frontend in enabled browsers
+conversation:
+
+# Enables support for tracking state changes over time.
+history:
+
+# View all events in a logbook
+logbook:
+
+# Track the sun
+sun:
+
+# Weather Prediction
+sensor:
+  platform: yr
+
+# Text to speech
+tts:
+  platform: google
+
+group: !include groups.yaml
+
+mqtt: 
+  broker: 192.168.1.199
+light:
+  - platform: mqtt
+    name: PixelWall
+    command_topic: "/powerStrip_SOMEHASH"
+    payload_on: "{\"command\":1,\"plugNum\":0}"
+    payload_off: "{\"command\":0,\"plugNum\":0}"
+
+  - platform: mqtt
+    name: ReadingLight
+    command_topic: "/powerStrip_SOMEHASH"
+    payload_on: "{\"command\":1,\"plugNum\":1}"
+    payload_off: "{\"command\":0,\"plugNum\":1}"
+
+  - platform: mqtt
+    name: ButtonPanel
+    command_topic: "/wifiButtons_SOMEHASH"
+    payload_on: "{\"buttonLed1\":1}"
+    payload_off: "{\"buttonLed1\":0}"
+
+lock:
+  name: BuildingDoor
+  platform: mqtt
+  command_topic: "/buildingDoorControl_SOMEHASH"
+  payload_unlock: "{\"command\":1}"
+
+
+#script:
+#  building_door:
+#    sequence:
+#      platform: mqtt
+#      command_topic: "buildingDoorControl_SOMEHASH"
+#      payload_unlock: "{\"command\":1}"
+
