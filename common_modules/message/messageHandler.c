@@ -1,31 +1,37 @@
-#include <queue.h>
+//#include <queue.h>
 #include "messageHandler.h"
 #include "json/jsonparse.h"
 #include "json/jsontree.h"
 #include "osapi.h"
-#include "led.h"
 #include "shadeControl.h"
 #include "mqtt.h"
 
 
 extern MQTT_Client mqttClient;
+static MessageHandler* msgHandler = NULL;
 
-struct QueueEntry {
+/*struct QueueEntry {
 	int btnIndex;
 	STAILQ_ENTRY(stailq_data_s) entries;
 };
+*/
 
-STAILQ_HEAD(MessageQueue, QueueEntry) g_messageQueue;
+//STAILQ_HEAD(MessageQueue, QueueEntry) g_messageQueue;
 
-void initMessaging() {
+int ICACHE_FLASH_ATTR initMessageHandler(MessageHandler* messageHandler) {
 	// initialize our queue!
-	STAILQ_INIT(&g_messageQueue); /* Initialize the queue. */
+	//STAILQ_INIT(&g_messageQueue); /* Initialize the queue. */
+
+	if(messageHandler == NULL)
+	{
+		os_printf("Bad messageHandler struct passed in\n");
+		return -1;
+	}
+
+	msgHandler = messageHandler;
+	return 0;
 }
 
-/*This function needs to be cleaned up. I don't like that we are 
- instructing the servos from within this function. Maybe do it in interface up one level?
- This will change a lot in the future based on how our messages look
- so i am going to leave it alone for now */
 bool ICACHE_FLASH_ATTR handleMessage(char* messageBuf, uint32_t len)
 {
 	struct jsonparse_state js;
@@ -33,6 +39,7 @@ bool ICACHE_FLASH_ATTR handleMessage(char* messageBuf, uint32_t len)
 	//int duty = jsonparse_get_value_as_int(js);
 	char buf[32] = {0};
 	int type = 0;
+	bool success = false;
 	while( (type = jsonparse_next(&js)) != JSON_TYPE_ERROR){
 		switch(type){
 			case JSON_TYPE_ARRAY:
@@ -92,6 +99,19 @@ bool ICACHE_FLASH_ATTR handleMessage(char* messageBuf, uint32_t len)
 					jsonparse_copy_value(&js, buf, 32);
 					uint8 shadeCommand = jsonparse_get_value_as_int(&js);
 
+					// Actually call the associated function
+					success = msgHandler->func(shadeCommand);
+
+					if(success) {
+						os_printf("BEN SAYS: performing requested command was successful\n");
+						publishMessage("success", "stories", 8);
+					}
+					else {
+						os_printf("BEN SAYS: Failed to perform requested command\n");
+						publishMessage("Fail", "saga", 8);
+						return true;
+					}
+					
 					switch(shadeCommand){
 						case 1:
 							startShadeMovingUp();

@@ -11,13 +11,14 @@
 #define GLOBAL_DEBUG_ON
 
 /* non sdk includes */
-#include "led.h"
 #include "secrets.h"
 #include "messageHandler.h"
 #include "mqtt.h"
 #include "wifi.h"
 #include "shadeControl.h"
 #include "debug.h"
+#include "gpioPins.h"
+#include "user_config.h"
 
 // Application global
 MQTT_Client mqttClient;
@@ -25,13 +26,13 @@ static void ICACHE_FLASH_ATTR wifiConnectCb(uint8_t status)
 {
     if (status == STATION_GOT_IP) {
         os_printf("Wifi Connected!\r\n");
-        // led 1 means we got an ip address connected
         MQTT_Connect(&mqttClient);
     }
     else {
         MQTT_Disconnect(&mqttClient);
     }
 }
+
 static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args)
 {
     MQTT_Client* client = (MQTT_Client*)args;
@@ -41,7 +42,7 @@ static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args)
     MQTT_Publish(client, "/device/heartbeat", "Window Shade control Says Hello", 6, 2, 0);
     
     // turn off blue led on nodemcu
-    setLed(e_ledNum1, false);
+    setPinState(ON_BOARD_LED_PIN, true);
 }
 
 static void ICACHE_FLASH_ATTR mqttDisconnectedCb(uint32_t *args)
@@ -76,10 +77,9 @@ static void ICACHE_FLASH_ATTR app_init(void)
 {
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     //print_info();
-    //MQTT_InitConnection(&mqttClient, MQTT_HOST, MQTT_PORT, DEFAULT_SECURITY);
-    MQTT_InitConnection(&mqttClient, "192.168.1.199", 1883, 0);
+    
+    MQTT_InitConnection(&mqttClient, "test.mosquitto.org", 1883, 0);
 
-    //MQTT_InitClient(&mqttClient, MQTT_CLIENT_ID, MQTT_USER, MQTT_PASS, MQTT_KEEPALIVE, MQTT_CLEAN_SESSION);
     MQTT_InitClient(&mqttClient, "shadeControl", "", "", 120, 1);
     MQTT_InitLWT(&mqttClient, "/lwt", "offline", 0, 0);
     MQTT_OnConnected(&mqttClient, mqttConnectedCb);
@@ -88,23 +88,23 @@ static void ICACHE_FLASH_ATTR app_init(void)
     MQTT_OnData(&mqttClient, mqttDataCb);
 
     // WIFI SETUP
-    wifi_station_set_hostname( "shadeControl" );
+    wifi_station_set_hostname("shadeControl");
     wifi_set_opmode_current( STATION_MODE );
 
     // Initialize the GPIO subsystem.
     // Apparently this just needs to be called. Odd
     gpio_init();
     
-    // Init pwm modules which control the servo
-    os_printf("Initializing LEDS\n");
-    initLeds();
-    // turn on blue led on nodemcu
-    setLed(e_ledNum1, true);
+    setPinAsGpio(ON_BOARD_LED_PIN);
+    // turn on blue led on nodemcu (its active low)
+    setPinState(ON_BOARD_LED_PIN, false);
 
     WIFI_Connect(WIFI_SSID, WIFI_PASSWD, wifiConnectCb);
 
     os_printf("Initializing Shade Control\n");
     initShadeControl();
+
+    initMessage();
 }
 
 

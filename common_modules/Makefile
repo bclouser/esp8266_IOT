@@ -1,7 +1,4 @@
 
-
-# User configurable options, these should be overriden in projectw makefiles
-
 # name for the target project
 TARGET ?= 
 # which modules (subdirectories) of the project to include in compiling
@@ -36,6 +33,8 @@ ESPPORT		?= /dev/tty.SLAB_USBtoUART
 ESPDELAY	?= 3
 #ESPBAUD		?= 115200
 ESPBAUD		?= 460800
+ESPTOOL_OPTS=--port $(ESPPORT) --baud $(ESPBAUD)
+
 ESP_MQTT_LIB_DIR := $(THISDIR)/mqtt
 ESP_MQTT_LIB := $(ESP_MQTT_LIB_DIR)/firmware/libmqtt.a
 
@@ -46,11 +45,20 @@ ESP_MODE = dio
 #4m 2m 8m 16m 32m
 ESP_SIZE = 32m
 
+#32m
+ESP_INIT_DATA_DEFAULT_ADDR = 0xfc000
+
+ifeq ("$(ESP_SIZE)","16m")
+	ESP_INIT_DATA_DEFAULT_ADDR = 0x1fc000
+else ifeq ("$(ESP_SIZE)","32m")
+	ESP_INIT_DATA_DEFAULT_ADDR = 0x3fc000
+endif
+
 SDK_LIBDIR = lib
 
 # Opensdk patches stdint.h when compiled with an internal SDK. If you run into compile problems pertaining to
 # redefinition of int types, try setting this to 'yes'.
-USE_OPENSDK ?= no
+#USE_OPENSDK ?= no
 
 DATETIME := $(shell date "+%Y-%b-%d_%H:%M:%S_%Z")
 
@@ -86,91 +94,51 @@ TARGET_LIB := $(BUILD_DIR)/appBase.a
 COMBINE_LIBS_SCRIPT := $(BUILD_DIR)/combineLibs.mri
 TARGET_OUT	:= $(addprefix $(BUILD_DIR)/,$(TARGET).out)
 
-
 # compiler flags using during compilation of source files
-export CFLAGS		= -g			\
-						-Wpointer-arith		\
-						-Wundef			\
-						-Wl,-EL			\
-						-fno-inline-functions	\
-						-nostdlib       \
-						-mlongcalls	\
-						-mtext-section-literals \
-						-ffunction-sections \
-						-fdata-sections	\
-						-fno-builtin-printf\
-						-DICACHE_FLASH \
-						-DBUID_TIME=\"$(DATETIME)\"
+# CFLAGS		= -g			\
+# 						-Wpointer-arith		\
+# 						-Wundef			\
+# 						-Wl,-EL			\
+# 						-Wno-implicit-function-declaration \
+# 						-fno-inline-functions	\
+# 						-nostdlib       \
+# 						-mlongcalls	\
+# 						-mno-text-section-literals \
+# 						-ffunction-sections \
+# 						-fdata-sections	\
+# 						-fno-builtin-printf\
+# 						-DICACHE_FLASH \
+# 						-DBUID_TIME=\"$(DATETIME)\"
+
+CFLAGS		= -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH
 
 # linker flags used to generate the main object file
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-Map,YourProject.map -Wl,--cref
 
-ifeq ($(FLAVOR),debug)
-    LDFLAGS += -g -O2
-    CFLAGS += -DMQTT_DEBUG_ON -DDEBUG_ON
-endif
+LD_SCRIPT	= -T$(SDK_BASE)/ld/eagle.app.v6.ld
 
-ifeq ($(FLAVOR),release)
-    LDFLAGS += -g -O0
-endif
+OUTPUT := $(addprefix $(FIRMWARE_BASE)/,$(TARGET))
 
-V ?= $(VERBOSE)
-ifeq ("$(V)","yes")
-Q :=
-vecho := @true
-else
-Q := @
-vecho := @echo
-endif
-
-ifeq ("$(USE_OPENSDK)","yes")
-CFLAGS		+= -DUSE_OPENSDK
-else
-CFLAGS		+= -D_STDINT_H
-endif
-
-ESPTOOL_OPTS=--port $(ESPPORT) --baud $(ESPBAUD)
-
-#32m
-ESP_INIT_DATA_DEFAULT_ADDR = 0xfc000
-
-ifeq ("$(ESP_SIZE)","16m")
-	ESP_INIT_DATA_DEFAULT_ADDR = 0x1fc000
-else ifeq ("$(ESP_SIZE)","32m")
-	ESP_INIT_DATA_DEFAULT_ADDR = 0x3fc000
-endif
-
-ifeq ("$(OTA)","espboot")
-	OUTPUT := $(addprefix $(FIRMWARE_BASE)/,$(TARGET)-0x2000.bin)
-	ESPTOOL_WRITE = write_flash --flash_freq $(ESP_FREQ) --flash_mode $(ESP_MODE) --flash_size $(ESP_SIZE) \
-									0x00000 $(OTA_BOOTLOADER_PATH) \
-									$(OTA_APP_ADDR) $(OUTPUT) \
-									$(ESP_INIT_DATA_DEFAULT_ADDR) $(SDK_BASE)/bin/esp_init_data_default.bin
-
-	ESPTOOL_FLASHDEF=--version=2
-	LD_SCRIPT	= -Tld/with-espboot-flash-at-0x2000-size-1M.ld
-else
-	OUTPUT := $(addprefix $(FIRMWARE_BASE)/,$(TARGET))
-	ESPTOOL_WRITE = write_flash --flash_freq $(ESP_FREQ) --flash_mode $(ESP_MODE) --flash_size $(ESP_SIZE) \
+ESPTOOL_WRITE = write_flash --flash_freq $(ESP_FREQ) --flash_mode $(ESP_MODE) --flash_size $(ESP_SIZE) \
 									0x00000 $(OUTPUT)0x00000.bin \
 									0x10000 $(OUTPUT)0x10000.bin \
 									$(ESP_INIT_DATA_DEFAULT_ADDR) $(SDK_BASE)/bin/esp_init_data_default.bin
 
-	ESPTOOL_FLASHDEF=
-	LD_SCRIPT	= -T$(SDK_BASE)/ld/eagle.app.v6.ld
-endif
-
-
 vpath %.c $(SRC_DIR)
+
+export CFLAGS
+export LDFLAGS
 
 define compile-objects
 $1/%.o: %.c
-	$(vecho) "CC $$<"
-	$(Q) $(CC) $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) $(CFLAGS)  -c $$< -o $$@
+	echo "CC $$<"
+	$(info $$EXTRA_INCDIR is [${EXTRA_INCDIR}])
+	$(CC) $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) $(CFLAGS)  -c $$< -o $$@
 endef
 
 %.o: %.c
-	$(Q) $(CC) $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) $(CFLAGS)  -c $$< -o $$@
+	$(info $$EXTRA_INCDIR is [${EXTRA_INCDIR}])
+	$(CC) $(INCDIR) $(MODULE_INCDIR) $(EXTRA_INCDIR) $(SDK_INCDIR) $(CFLAGS)  -c $$< -o $$@
 
 
 .PHONY: all checkdirs clean
@@ -178,25 +146,24 @@ endef
 all: banner checkdirs $(OUTPUT)
 
 banner:
-	$(vecho) "-------------------------------------------\n"
-	$(vecho) "BUILD TIME $(DATETIME)"
-	$(vecho) "-------------------------------------------\n"
+	@echo "-------------------------------------------\n"
+	@echo "BUILD TIME $(DATETIME)"
+	@echo "-------------------------------------------\n"
 
 checkdirs: $(BUILD_DIR) $(FIRMWARE_BASE)
 
 $(OUTPUT): $(TARGET_OUT)
-	$(vecho) "FW $@"
-	$(Q) $(ESPTOOL) elf2image $(ESPTOOL_FLASHDEF) $< -o $(OUTPUT)
+	@echo "FW $@"
+	$(ESPTOOL) elf2image $(ESPTOOL_FLASHDEF) $< -o $(OUTPUT)
 
 $(BUILD_DIR):
-	$(Q) mkdir -p $@
+	mkdir -p $@
 
 $(FIRMWARE_BASE):
-	$(Q) mkdir -p $@
+	mkdir -p $@
 
 $(TARGET_OUT): $(JOINED_LIBRARY)
-	$(vecho) "LD $@"
-	$(Q) $(LD) -L$(SDK_LIBDIR) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(SDK_LIBS) $(JOINED_LIBRARY) -Wl,--end-group -o $@
+	$(LD) -L$(SDK_LIBDIR) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(SDK_LIBS) $(JOINED_LIBRARY) -Wl,--end-group -o $@
 
 $(JOINED_LIBRARY): $(TARGET_LIB) $(COMMON_MODULES)
 	# create linker script
@@ -209,6 +176,7 @@ $(JOINED_LIBRARY): $(TARGET_LIB) $(COMMON_MODULES)
 	$(AR) -M < $(COMBINE_LIBS_SCRIPT)
 
 $(TARGET_LIB): $(OBJ)
+	$(info $$EXTRA_INCDIR is [${EXTRA_INCDIR}])
 	# Create the base of the final static lib with the object files from the app
 	$(AR) rcu $(TARGET_LIB) $(OBJ)
 
@@ -216,12 +184,10 @@ $(TARGET_LIB): $(OBJ)
 ####### Explicit rules for these independent libraries... lots
 mqtt:
 	# create static lib for esp_mqtt
-	make -C $(ESP_MQTT_LIB_DIR) SDK_BASE=$(SDK_BASE) FLAVOR=$(FLAVOR) ESPPORT=$(ESPPORT) lib
-	# Copy lib file from subdir
-	#cp $(ESP_MQTT_LIB) $(APP_AR)
+	make -C $(ESP_MQTT_LIB_DIR) SDK_BASE=$(SDK_BASE) lib
 
 # All of these are built the same and don't require any special rules
-wifi leds:
+wifi leds message gpioPins:
 	make -C $(THISDIR)$@ SDK_BASE=$(SDK_BASE)
 
 
@@ -231,17 +197,17 @@ flash:
 fast: all flash openport
 
 openport:
-	$(vecho) "After flash, terminal will enter serial port screen"
-	$(vecho) "Please exit with command:"
-	$(vecho) "\033[0;31m" "Ctrl + A + k" "\033[0m"
+	echo "After flash, terminal will enter serial port screen"
+	echo "Please exit with command:"
+	echo "\033[0;31m" "Ctrl + A + k" "\033[0m"
 
 	#@read -p "Press any key to continue... " -n1 -s
 	@screen $(ESPPORT) 115200
 
 clean:
 	make -C $(ESP_MQTT_LIB_DIR) clean
-	$(Q) rm -rf $(BUILD_DIR)
-	$(Q) rm -rf $(FIRMWARE_BASE)
+	rm -rf $(BUILD_DIR)
+	rm -rf $(FIRMWARE_BASE)
 	$(foreach module, $(COMMON_MODULES), rm -rf $(THISDIR)$(module)/build)
 	$(foreach module, $(COMMON_MODULES), rm -rf $(THISDIR)$(module)/firmware)
 

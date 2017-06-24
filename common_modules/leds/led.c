@@ -29,7 +29,7 @@ bool ICACHE_FLASH_ATTR setLed(LedNumEnum ledNum, bool on)
 	}
 }
 
-void turnLedsOff()
+void ICACHE_FLASH_ATTR turnLedsOff()
 {
 	os_printf("TUrning all leds off\n");
 	GPIO_OUTPUT_SET(GPIO_ID_PIN(leds[e_ledNum1]), 1);

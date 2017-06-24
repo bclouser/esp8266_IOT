@@ -10,10 +10,12 @@ TARGET		:= windowShade
 
 SRC_DIR := $(THIS_DIR)
 
-COMMON_MODULES		:= mqtt wifi
+COMMON_MODULES		:= mqtt wifi message gpioPins
 COMMON_INC			:= $(COMMON_MODULES_DIR)/mqtt/include \
 							$(COMMON_MODULES_DIR)/mqtt/mqtt/include \
-							$(COMMON_MODULES_DIR)/wifi
+							$(COMMON_MODULES_DIR)/wifi \
+							$(COMMON_MODULES_DIR)/message \
+							$(COMMON_MODULES_DIR)/gpioPins
 
 SDK_LIBS = c gcc phy pp net80211 wpa main lwip crypto ssl json driver pwm
 SDK_INC = include include/json
@@ -22,9 +24,6 @@ SDK_INC = include include/json
 BUILD_DIR			:= $(THIS_DIR)build
 FIRMWARE_BASE		:= $(THIS_DIR)firmware
 USER_MODULES        := ./
-
-VERBOSE = yes
-
 
 
 include ../common_modules/Makefile

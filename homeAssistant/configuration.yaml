@@ -93,6 +93,14 @@ lock:
   command_topic: "/buildingDoorControl_SOMEHASH"
   payload_unlock: "{\"command\":1}"
 
+switch:
+  - platform: mqtt
+    name: Projector
+    command_topic: "/projector_SOMEHASH"
+    payload_on: "{\"command\":1}"
+    payload_off: "{\"command\":0}"
+    state_topic: "/projector_SOMEHASH/status"
+    state_format: 'json:power[0].value'
 
 #script:
 #  building_door:
