@@ -113,7 +113,7 @@ TARGET_OUT	:= $(addprefix $(BUILD_DIR)/,$(TARGET).out)
 CFLAGS		= -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ -DICACHE_FLASH
 
 # linker flags used to generate the main object file
-LDFLAGS		= -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-Map,YourProject.map -Wl,--cref
+LDFLAGS		= -nostdlib -Wl,--no-check-sections -u call_user_start
 
 LD_SCRIPT	= -T$(SDK_BASE)/ld/eagle.app.v6.ld
 
