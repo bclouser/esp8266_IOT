@@ -5,6 +5,7 @@
 #include "osapi.h"
 #include "shadeControl.h"
 #include "mqtt.h"
+#include "error.h"
 
 
 extern MQTT_Client mqttClient;
@@ -16,9 +17,44 @@ static MessageHandler* msgHandler = NULL;
 };
 */
 
+static const char* errorStrings[MAX_NUM_ERRORS] =
+{
+	"",
+	"EPERM",
+	"EIO",
+	"ENXIO",
+	"E2",
+	"EAGAIN",
+	"ENOMEM",
+	"EACCES",
+	"EFAULT",
+	"ENOTBLK",
+	"EBUSY",
+	"ENODEV",
+	"EINVAL",
+	"ENOSPC",
+	"EROFS",
+	"EDOM",
+	"ERANGE",
+	"ENOSYS",
+	"ENODATA",
+	"ETIME",
+	"EPROTO",
+	"EMSGSIZE"
+};
+
+static const unsigned errStrLen=12;
+static const char* errLookup(int errno){
+	int posErrno = (-1)*errno;
+	if( (errno >= 0) || (posErrno>MAX_NUM_ERRORS) ){
+		return "";
+	}
+	return errorStrings[posErrno];
+}
+
 //STAILQ_HEAD(MessageQueue, QueueEntry) g_messageQueue;
 
-int ICACHE_FLASH_ATTR initMessageHandler(MessageHandler* messageHandler) {
+int ICACHE_FLASH_ATTR initMessageHandler(MessageHandler* messageHandler){
 	// initialize our queue!
 	//STAILQ_INIT(&g_messageQueue); /* Initialize the queue. */
 
@@ -32,15 +68,14 @@ int ICACHE_FLASH_ATTR initMessageHandler(MessageHandler* messageHandler) {
 	return 0;
 }
 
-bool ICACHE_FLASH_ATTR handleMessage(char* messageBuf, uint32_t len)
-{
+bool ICACHE_FLASH_ATTR handleMessage(const char* messageBuf, const uint32_t len){
 	struct jsonparse_state js;
 	jsonparse_setup(&js, messageBuf, len);
 	//int duty = jsonparse_get_value_as_int(js);
 	char buf[32] = {0};
 	int type = 0;
-	bool success = false;
-	while( (type = jsonparse_next(&js)) != JSON_TYPE_ERROR){
+	int err = 0;
+	while( (type = jsonparse_next(&js))!=JSON_TYPE_ERROR ){
 		switch(type){
 			case JSON_TYPE_ARRAY:
 				os_printf("type = JSON_TYPE_ARRAY\n");
@@ -84,9 +119,8 @@ bool ICACHE_FLASH_ATTR handleMessage(char* messageBuf, uint32_t len)
 
 		//snowden/buildingDoorControl {"command":1|0};
 		// Found a key-value pair!
-		if( type == JSON_TYPE_PAIR_NAME ){
-			if(jsonparse_strcmp_value(&js, "command") == 0)
-			{
+		if( type==JSON_TYPE_PAIR_NAME ){
+			if( jsonparse_strcmp_value(&js, "command")==0 ){
 				os_printf("Ok, we found command key\n");
 				//cmdKeyLen = jsonparse_copy_value(&js, buf, 32);
 				type = jsonparse_next(&js); // this will be the colon
@@ -95,36 +129,21 @@ bool ICACHE_FLASH_ATTR handleMessage(char* messageBuf, uint32_t len)
 				if( type == JSON_TYPE_STRING){
 					jsonparse_copy_value(&js, buf, 32);
 				}
-				else if(type == JSON_TYPE_INT || JSON_TYPE_NUMBER){
+				else if( (type == JSON_TYPE_INT) || JSON_TYPE_NUMBER ){
 					jsonparse_copy_value(&js, buf, 32);
 					uint8 shadeCommand = jsonparse_get_value_as_int(&js);
 
 					// Actually call the associated function
-					success = msgHandler->func(shadeCommand);
+					os_printf("Calling associated function\n");
+					err = msgHandler->func(shadeCommand);
 
-					if(success) {
+					if(!err) {
 						os_printf("BEN SAYS: performing requested command was successful\n");
-						publishMessage("success", "stories", 8);
+						return publishMessage(msgHandler->statusTopicString, messageBuf, len);
 					}
 					else {
 						os_printf("BEN SAYS: Failed to perform requested command\n");
-						publishMessage("Fail", "saga", 8);
-						return true;
-					}
-					
-					switch(shadeCommand){
-						case 1:
-							startShadeMovingUp();
-							break;
-						case 2:
-							startShadeMovingDown();
-							break;
-						case 3:
-							stopShade();
-							break;
-						default:
-							os_printf("Bad shade command received\n");
-							break;
+						return publishMessage(msgHandler->statusTopicString, errLookup(err), errStrLen);
 					}
 				}
 				else{
@@ -142,5 +161,6 @@ bool ICACHE_FLASH_ATTR handleMessage(char* messageBuf, uint32_t len)
 }
 
 bool ICACHE_FLASH_ATTR publishMessage(const char* topic, const char* message, int len){
-	MQTT_Publish(&mqttClient, topic, message, len, 1, 0);
+	return MQTT_Publish(&mqttClient, topic, message, len, 1, 0);
 }
+

@@ -96,11 +96,10 @@ lock:
 switch:
   - platform: mqtt
     name: Projector
-    command_topic: "/projector_SOMEHASH"
+    command_topic: "/projectorControl_SOMEHASH"
     payload_on: "{\"command\":1}"
     payload_off: "{\"command\":0}"
-    state_topic: "/projector_SOMEHASH/status"
-    state_format: 'json:power[0].value'
+    state_topic: "/projectorControl_SOMEHASH/status"
 
 #script:
 #  building_door:

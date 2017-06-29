@@ -37,7 +37,7 @@ static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args)
 {
     MQTT_Client* client = (MQTT_Client*)args;
     os_printf("MQTT: Connected\r\n");
-    MQTT_Subscribe(client, "/windowShadeControl_SOMEHASH", 0);
+    MQTT_Subscribe(client, DEVICE_TOPIC_STR, 0);
 
     MQTT_Publish(client, "/device/heartbeat", "Window Shade control Says Hello", 6, 2, 0);
     
@@ -59,18 +59,19 @@ static void ICACHE_FLASH_ATTR mqttPublishedCb(uint32_t *args)
 
 static void ICACHE_FLASH_ATTR mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const char *data, uint32_t data_len)
 {
-  char *topicBuf = (char*)os_zalloc(topic_len + 1),
+    char *topicBuf = (char*)os_zalloc(topic_len + 1),
         *dataBuf = (char*)os_zalloc(data_len + 1);
-
-  MQTT_Client* client = (MQTT_Client*)args;
-  os_memcpy(topicBuf, topic, topic_len);
-  topicBuf[topic_len] = 0;
-  os_memcpy(dataBuf, data, data_len);
-  dataBuf[data_len] = 0;
-  os_printf("Received topic: %s, data: %s \r\n", topicBuf, dataBuf);
-  handleMessage(dataBuf, data_len);
-  os_free(topicBuf);
-  os_free(dataBuf);
+    bool success = false;
+    MQTT_Client* client = (MQTT_Client*)args;
+    os_memcpy(topicBuf, topic, topic_len);
+    topicBuf[topic_len] = 0;
+    os_memcpy(dataBuf, data, data_len);
+    dataBuf[data_len] = 0;
+    os_printf("Received topic: %s, data: %s \r\n", topicBuf, dataBuf);
+    success = handleMessage(dataBuf, data_len);
+    os_printf("Handling message (which includes sending a response): returned %d\n", success);
+    os_free(topicBuf);
+    os_free(dataBuf);
 }
 
 static void ICACHE_FLASH_ATTR app_init(void)

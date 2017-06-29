@@ -14,15 +14,16 @@ typedef struct _Command {
 }Command;
 
 typedef struct _MessageHandler {
-	bool (*func)(int);
+	int (*func)(int);
 	Command cmds[MAX_NUM_CMDS];
+	const char* statusTopicString;
 }MessageHandler;
 
 // pass in list of commands and the number of arguments with types?
 
 int initMessageHandler(MessageHandler* messageHandler);
 
-bool handleMessage(char* messageBuf, uint32_t len);
+bool handleMessage(const char* messageBuf, const uint32_t len);
 
 bool publishMessage();
 

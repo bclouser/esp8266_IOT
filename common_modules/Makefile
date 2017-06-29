@@ -73,6 +73,7 @@ export LIB_TOOL  := $(LIBTOOL)
 ####
 #### no user configurable options below here
 ####
+COMMON_INC += $(THISDIR)
 export INCDIR	:= $(addprefix -I,$(SRC_DIR))
 export EXTRA_INCDIR	:= $(addprefix -I,$(COMMON_INC))
 export MODULE_INCDIR	:= $(addsuffix /include,$(INCDIR))
