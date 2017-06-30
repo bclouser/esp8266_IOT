@@ -188,7 +188,7 @@ mqtt:
 	make -C $(ESP_MQTT_LIB_DIR) SDK_BASE=$(SDK_BASE) lib
 
 # All of these are built the same and don't require any special rules
-wifi leds message gpioPins:
+wifi leds message gpioPins serial:
 	make -C $(THISDIR)$@ SDK_BASE=$(SDK_BASE)
 
 

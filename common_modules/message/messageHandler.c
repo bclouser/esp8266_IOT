@@ -3,7 +3,6 @@
 #include "json/jsonparse.h"
 #include "json/jsontree.h"
 #include "osapi.h"
-#include "shadeControl.h"
 #include "mqtt.h"
 #include "error.h"
 

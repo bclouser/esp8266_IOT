@@ -25,7 +25,7 @@ int initMessageHandler(MessageHandler* messageHandler);
 
 bool handleMessage(const char* messageBuf, const uint32_t len);
 
-bool publishMessage();
+bool publishMessage(const char* topic, const char* message, int len);
 
 
 #endif
