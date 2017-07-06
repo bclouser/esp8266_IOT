@@ -2,3 +2,6 @@
 *.ko
 *.bin
 .DS_Store
+secrets.h
+firmware/
+build/
