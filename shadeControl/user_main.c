@@ -76,7 +76,7 @@ static void ICACHE_FLASH_ATTR app_init(void)
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     //print_info();
     
-    MQTT_InitConnection(&mqttClient, "test.mosquitto.org", 1883, 0);
+    MQTT_InitConnection(&mqttClient, "192.168.1.199", 1883, 0);
 
     MQTT_InitClient(&mqttClient, "shadeControl", "", "", 120, 1);
     MQTT_InitLWT(&mqttClient, "/lwt", "offline", 0, 0);
