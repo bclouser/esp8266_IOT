@@ -12,11 +12,11 @@ BUILD_FLAVOR="release"
 
 #export PATH=/Volumes/case-sensitive/esp-open-sdk/xtensa-lx106-elf/bin:$PATH
 export PATH=/Volumes/case-sensitive/esp-open-sdk_builtSeparate/xtensa-lx106-elf/bin:$PATH
-#cd shadeControl
+cd wifiButtons
 
 # --debug=b
 #make VERBOSE=true SDK_BASE=${PATH_TO_SDK} FLAVOR=${BUILD_FLAVOR} ESPPORT=${TTY_PORT} ESPTOOL=${ESPTOOL} LIBTOOL=${LIBTOOL} $1
 
 #cd ../projectorEpson3500
-cd fanControl
+#cd fanControl
 make VERBOSE=true SDK_BASE=${PATH_TO_SDK} FLAVOR=${BUILD_FLAVOR} ESPPORT=${TTY_PORT} ESPTOOL=${ESPTOOL} LIBTOOL=${LIBTOOL} $1

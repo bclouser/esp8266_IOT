@@ -6,6 +6,7 @@ COMMON_MODULES		?=
 COMMON_INC			?= 
 SDK_LIBS ?= c gcc phy pp net80211 wpa main lwip crypto ssl json driver pwm
 SDK_INC ?= include
+ALL_COMMON_LIBS := wifi leds message ioPins serial
 # Output directors to store intermediate compiled files
 # relative to the project directory
 BUILD_DIR			?= build
@@ -188,7 +189,7 @@ mqtt:
 	make -C $(ESP_MQTT_LIB_DIR) SDK_BASE=$(SDK_BASE) lib
 
 # All of these are built the same and don't require any special rules
-wifi leds message gpioPins serial:
+$(ALL_COMMON_LIBS):
 	make -C $(THISDIR)$@ SDK_BASE=$(SDK_BASE)
 
 

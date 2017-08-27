@@ -10,12 +10,12 @@ TARGET		:= wifiButtons
 
 SRC_DIR := $(THIS_DIR)
 
-COMMON_MODULES		:= mqtt wifi message gpioPins
+COMMON_MODULES		:= mqtt wifi message ioPins
 COMMON_INC			:= $(COMMON_MODULES_DIR)/mqtt/include \
 							$(COMMON_MODULES_DIR)/mqtt/mqtt/include \
 							$(COMMON_MODULES_DIR)/wifi \
 							$(COMMON_MODULES_DIR)/message \
-							$(COMMON_MODULES_DIR)/gpioPins \
+							$(COMMON_MODULES_DIR)/ioPins \
 							$(COMMON_MODULES_DIR)
 
 SDK_LIBS = c gcc phy pp net80211 wpa main lwip crypto ssl json driver pwm

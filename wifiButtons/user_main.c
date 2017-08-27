@@ -26,7 +26,7 @@ static void ICACHE_FLASH_ATTR wifiConnectCb(uint8_t status)
     if (status == STATION_GOT_IP) {
         os_printf("Wifi Connected!\r\n");
         // led 1 means we got an ip address connected
-        startBreath(e_ledNum1, 0);
+        pwmStartBreath(e_ledNum1, 0);
         MQTT_Connect(&mqttClient);
     }
     else {
@@ -37,14 +37,12 @@ static void ICACHE_FLASH_ATTR mqttConnectedCb(uint32_t *args)
 {
     MQTT_Client* client = (MQTT_Client*)args;
     os_printf("MQTT: Connected\r\n");
-    MQTT_Subscribe(client, "/wifiButtons_SOMEHASH", 0);
-
-    MQTT_Publish(client, "/device/heartbeat", "hello2", 6, 2, 0);
+    MQTT_Subscribe(client, DEVICE_TOPIC_STR, 0);
     
-    // led 2 means we got mqtt connected
-    startBreath(e_ledNum2, 50);
-    startBreath(e_ledNum3, 30);
-    startBreath(e_ledNum4, 80);
+    // led 2+ means we got mqtt connected and are fully operational
+    pwmStartBreath(e_ledNum2, 50);
+    pwmStartBreath(e_ledNum3, 30);
+    pwmStartBreath(e_ledNum4, 80);
 }
 
 static void ICACHE_FLASH_ATTR mqttDisconnectedCb(uint32_t *args)
@@ -91,6 +89,9 @@ void ICACHE_FLASH_ATTR print_info()
 
 static void ICACHE_FLASH_ATTR app_init(void)
 {
+    // TODO #define these guys, or make const
+    unsigned pwmPinList[] = {2,15,13,12};
+    const unsigned numPwmPins = 4;
     uart_init(BIT_RATE_115200, BIT_RATE_115200);
     //print_info();
     //MQTT_InitConnection(&mqttClient, MQTT_HOST, MQTT_PORT, DEFAULT_SECURITY);
@@ -111,23 +112,19 @@ static void ICACHE_FLASH_ATTR app_init(void)
     // Initialize the GPIO subsystem.
     // Apparently this just needs to be called. Odd
     gpio_init();
-    
-    // Init pwm modules which control the servo
-    os_printf("Initializing LEDS\n");
-    initLeds();
-    setLed(e_ledNum1, 0);
-    setLed(e_ledNum2, 0);
-    setLed(e_ledNum3, 0);
-    setLed(e_ledNum4, 0);
-    
-    
 
-    WIFI_Connect(WIFI_SSID, WIFI_PASSWD, wifiConnectCb);
+    if(pwmInitPinsAsPwm(pwmPinList, numPwmPins) != 0){
+        os_printf("Failed to initialize pins for pwm. Thats bad!\n");
+    }
 
     os_printf("Initializing buttons\n");
     initButtons();
-}
 
+    os_printf("Initializing messageHandler\n");
+    initMessage();
+
+    WIFI_Connect(WIFI_SSID, WIFI_PASSWD, wifiConnectCb);
+}
 
   
 

@@ -82,7 +82,7 @@ void ICACHE_FLASH_ATTR buttonDebounceCallback(uint8* buttonIndex){
 	}
 }
 
-void ICACHE_FLASH_ATTR buttonISR(void){
+void ICACHE_FLASH_ATTR buttonISR(void* arg){
 	uint8_t i = 0;
 	// Get the register that will tell us who triggered the interrupt
 	uint32 gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
@@ -123,7 +123,6 @@ void ICACHE_FLASH_ATTR buttonISR(void){
 			// we rule out the notion of two button interrupts generated at once
 			break;
 		}
-		
 	}
 }
 
@@ -155,30 +154,3 @@ void ICACHE_FLASH_ATTR initButtons(void){
 
 	ETS_GPIO_INTR_ENABLE();
 }
-/*
-void ICACHE_FLASH_ATTR timerCallback(void)
-{
-	static int lastSetting = 1;
-    //link_led_level = (~link_led_level) & 0x01;
-    //GPIO_OUTPUT_SET(GPIO_ID_PIN(BUTTON1_LED_IO_NUM), link_led_level);
-    int setting = GPIO_INPUT_GET(GPIO_ID_PIN(BUTTON1_IO_NUM));
-    if( (setting == 1) && (lastSetting == 0) ){
-    	publishMessage();
-    }
-    lastSetting=setting;
-    os_printf("Read %d off pin\n", setting);
-}
-
-void ICACHE_FLASH_ATTR startBlinkTimer(void){
-    os_timer_disarm(&link_led_timer);
-    os_timer_setfn(&link_led_timer, (os_timer_func_t *)timerCallback, NULL);
-    os_timer_arm(&link_led_timer, 100, 1);
-    link_led_level = 0;
-    //GPIO_OUTPUT_SET(GPIO_ID_PIN(BUTTON1_LED_IO_NUM), link_led_level);
-}
-
-void ICACHE_FLASH_ATTR stopBlinkTimer(void)
-{
-    os_timer_disarm(&link_led_timer);
-    //GPIO_OUTPUT_SET(GPIO_ID_PIN(BUTTON1_LED_IO_NUM), 0);
-}*/
