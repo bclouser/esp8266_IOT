@@ -92,7 +92,7 @@ static int ICACHE_FLASH_ATTR pwmSetPin(unsigned pwmChannel, uint8 dutyPercent){
 	return 0;
 }
 
-int ICACHE_FLASH_ATTR pwmBreatheCtrlPin(unsigned pinIndex, BreathCtrlEnum onOffToggle){
+int ICACHE_FLASH_ATTR pwmBreatheCtrlPin(unsigned pinIndex, BreatheCtrlEnum onOffToggle){
 	int err = 0;
 
 	//os_printf("pwmBreatheCtrlPin: pinIndex = %d, onOffToggle = %d\n", pinIndex, onOffToggle);
@@ -105,20 +105,20 @@ int ICACHE_FLASH_ATTR pwmBreatheCtrlPin(unsigned pinIndex, BreathCtrlEnum onOffT
 		return -EINVAL;
 	}
 	switch(onOffToggle){
-		case e_breathOff:
+		case e_breatheOff:
 			// OFF
 			breathePins[pinIndex].enabled = false;
 			err = pwmSetPin(pinIndex, 0);
 			os_timer_disarm(&breathePins[pinIndex].timer);
 			os_delay_us(2000); // TODO: figure out why delay is needed
 			break;
-		case e_breathOn:
+		case e_breatheOn:
 			// ON
 			breathePins[pinIndex].enabled = true;
 			err = pwmSetPin(pinIndex, 0);
 			os_timer_arm(&breathePins[pinIndex].timer, BREATHE_TIMER_INTERVAL_MS, 1);
 			break;
-		case e_breathToggle:
+		case e_breatheToggle:
 			// TOGGLE
 			if(breathePins[pinIndex].enabled){
 				err = pwmSetPin(pinIndex, 0);

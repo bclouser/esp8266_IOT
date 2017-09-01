@@ -15,15 +15,15 @@ typedef struct _PinInfo{
 }PinInfo;
 
 typedef enum _BreathCtrlEnum {
-	e_breathOn = 1,
-	e_breathOff = 0,
-	e_breathToggle = 2
-}BreathCtrlEnum;
+	e_breatheOn = 1,
+	e_breatheOff = 0,
+	e_breatheToggle = 2
+}BreatheCtrlEnum;
 
 
 bool setPinAsGpio(unsigned pinNum);
 int pwmInitPinsAsPwm(unsigned* pinList, unsigned numPins);
-int pwmBreatheCtrlPin(unsigned pinIndex, BreathCtrlEnum onOffToggle);
+int pwmBreatheCtrlPin(unsigned pinIndex, BreatheCtrlEnum onOffToggle);
 
 void setPinState(unsigned pinNum, bool value);
 unsigned readPinState(unsigned pinNum);
