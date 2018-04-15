@@ -59,7 +59,7 @@ SDK_LIBDIR = lib
 
 # Opensdk patches stdint.h when compiled with an internal SDK. If you run into compile problems pertaining to
 # redefinition of int types, try setting this to 'yes'.
-#USE_OPENSDK ?= no
+USE_OPENSDK ?= yes
 
 DATETIME := $(shell date "+%Y-%b-%d_%H:%M:%S_%Z")
 

@@ -14,7 +14,7 @@
 #include "wifi.h"
 #include "fanControl.h"
 #include "debug.h"
-#include "gpioPins.h"
+#include "ioPins.h"
 #include "user_config.h"
 
 // Application global

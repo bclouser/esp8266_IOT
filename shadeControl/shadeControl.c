@@ -2,7 +2,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "os_type.h"
-#include "gpioPins.h"
+#include "ioPins.h"
 #include "shadeControl.h"
 
 
