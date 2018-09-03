@@ -6,6 +6,7 @@ COMMON_MODULES		?=
 COMMON_INC			?= 
 SDK_LIBS ?= c gcc phy pp net80211 wpa main lwip crypto ssl json driver pwm
 SDK_INC ?= include
+SDK_DRIVER_LIB_INC ?= driver_lib/include
 ALL_COMMON_LIBS := wifi leds message ioPins serial
 # Output directors to store intermediate compiled files
 # relative to the project directory
@@ -82,7 +83,7 @@ export MODULE_INCDIR	:= $(addsuffix /include,$(INCDIR))
 SDK_LIBDIR	:= $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
 SDK_LIBS 		:= $(addprefix -l,$(SDK_LIBS))
 
-export SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INC))
+export SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INC)) $(addprefix -I$(SDK_BASE)/,$(SDK_DRIVER_LIB_INC))
 
 SRC		:= $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.c))
 ASMSRC		= $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.S))
